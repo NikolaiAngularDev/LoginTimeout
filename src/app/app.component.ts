@@ -1,28 +1,26 @@
-import { Component, OnDestroy } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { AuthService } from './auth.service';
 import { finalize } from 'rxjs';
 
-const countdownValue = 60;
-const errorTimer = 5000;
-const countdownTimer = 1000;
+const COUNTDOWN_VALUE = 10;
+const ERROR_TIMER = 5000;
+const COUNTDOWN_TIMER = 1000;
 
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss']
 })
-export class AppComponent implements OnDestroy{
+export class AppComponent implements OnInit, OnDestroy{
   public title: string = 'LoginTimeout';
-  public loginForm: FormGroup = this.fb.group({
-    user: ['', [Validators.required]],
-  });
+  public loginForm!: FormGroup;
   public user: string = '';
   public error: boolean = false;
   public disableSubmit: boolean = false;
   public counter: number = 0;
-  private _countdownInterval: number = 0;
-  private _errorTimeout: number = 0;
+  private countdownInterval: number = 0;
+  private errorTimeout: number = 0;
 
   constructor(
     private fb: FormBuilder,
@@ -30,50 +28,57 @@ export class AppComponent implements OnDestroy{
   ) {
   }
 
+  ngOnInit() {
+    this.createForm();
+  }
+
   ngOnDestroy() {
-    if (this._countdownInterval) {
-      clearInterval(this._countdownInterval);
+    if (this.countdownInterval) {
+      clearInterval(this.countdownInterval);
     }
-    if (this._errorTimeout) {
-      clearInterval(this._errorTimeout);
+    if (this.errorTimeout) {
+      clearInterval(this.errorTimeout);
     }
+  }
+
+  createForm() {
+    this.loginForm = this.fb.group({
+      user: ['', [Validators.required]],
+    });
   }
 
   submit(): void {
     this.disableSubmit = true;
-    this.authService.login(this.loginForm.get('user')?.value)
+    const value = this.loginForm.get('user')?.value.trim();
+    this.authService.login(value)
       .pipe(finalize(() => this.setButtonCountdown()))
       .subscribe({
-      next: (res: string) => {
-        if (res) {
-          this.onSuccess(res);
-        } else {
+        next: (res: string) => {
+          res ? this.setUser(res) : this.onError();
+        },
+        error: err => {
           this.onError();
         }
-      },
-      error: err => {
-        this.onError();
-      }
-    })
+      })
   }
 
   onError() {
     this.user = '';
     this.error = true;
-    this._errorTimeout = setTimeout(() => this.error = false, errorTimer);
+    this.errorTimeout = setTimeout(() => this.error = false, ERROR_TIMER);
   }
 
-  onSuccess(result: string) {
+  setUser(result: string) {
     this.user = result;
   }
 
   setButtonCountdown() {
-    this.counter = countdownValue;
-    this._countdownInterval = setInterval(() => {
+    this.counter = COUNTDOWN_VALUE;
+    this.countdownInterval = setInterval(() => {
       if (--this.counter === 0) {
-        clearInterval(this._countdownInterval);
+        clearInterval(this.countdownInterval);
         this.disableSubmit = false;
       }
-    }, countdownTimer);
+    }, COUNTDOWN_TIMER);
   }
 }
