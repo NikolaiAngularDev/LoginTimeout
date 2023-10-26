@@ -3,7 +3,7 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { AuthService } from './auth.service';
 import { finalize } from 'rxjs';
 
-const COUNTDOWN_VALUE = 10;
+const COUNTDOWN_VALUE = 60;
 const ERROR_TIMER = 5000;
 const COUNTDOWN_TIMER = 1000;
 
